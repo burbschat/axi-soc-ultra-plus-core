@@ -218,6 +218,9 @@ if grep -q 'MACHINE_FEATURES:append = " rfsoc"' "$hwDir/Yocto/zynqmp-user.conf";
    echo "IMAGE_INSTALL:append = \" pyrfdc\"" >> $proj_dir/sources/meta-user/conf/layer.conf
 fi
 
+# Copy board dependend additions to kernel recipes (apparently this cannot be part of recipes-bsp)
+cp -rfL $hwDir/Yocto/recipes-kernel/* $proj_dir/sources/meta-user/recipes-kernel/
+
 ##############################################################################
 # Build Everything!
 ##############################################################################

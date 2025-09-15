@@ -1,5 +1,5 @@
 DESCRIPTION = "OLED message writer"
-LICENSE = "MIT"
+LICENSE = "CLOSED"
 
 SRC_URI = "file://nhd-oled.c \
            file://Makefile   \
