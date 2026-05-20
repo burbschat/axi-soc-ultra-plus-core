@@ -18,6 +18,7 @@ loadConstraints -dir "$::DIR_PATH/xdc"
 loadSource -lib axi_soc_ultra_plus_core -dir "$::DIR_PATH/rtl"
 
 # Load the block design
+set bdVer ""
 if  { $::env(VIVADO_VERSION) >= 2023.1 } {
    set bdVer "2023.1"
 }
