@@ -18,6 +18,7 @@ loadSource -lib axi_soc_ultra_plus_core -dir "$::DIR_PATH/rtl"
 set_property BOARD_PART xilinx.com:zcu670:part0:2.0 [current_project]
 
 # Load the block design
+set bdVer ""
 if  { $::env(VIVADO_VERSION) >= 2023.1 } {
    set bdVer "2023.1"
 }
