@@ -7,6 +7,10 @@ SRC_URI:remove:kria = " file://platform-top.h file://bsp.cfg"
 
 UBOOT_NETBOOT_MODE ??= "fallback"
 
+# Image path defaults to just image.ub but should be set to board/target
+# dependent name in the build script.
+UBOOT_TFTP_IMAGE_PATH ??= "image.ub"
+
 # Kria strips platform-top.h from SRC_URI (Kria configures u-boot from
 # xilinx_zynqmp_kria_defconfig + .cfg fragments), so this body must no-op when the
 # file was not fetched. A do_configure:append:kria would not help — task appends are

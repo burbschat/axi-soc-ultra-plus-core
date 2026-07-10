@@ -37,10 +37,13 @@ board=
 srcOverride=
 stageBitstream=0
 macs=()
+# Default to SLAC YoctoProjects directory
+buildRoot="/u1/${USER}/build/YoctoProjects"
 
 function show_help {
-   echo "USAGE: $0 -b BOARD [-f PATH] [-B] [-M MAC] [-H]"
+   echo "USAGE: $0 -b BOARD [-f PATH | -p PATH] [-B] [-M MAC] [-H]"
    echo " -b BOARD     - Board name, must match a directory name in axi-soc-ultra-plus-core/hardware (required)"
+   echo " -p PATH      - Path to the Yocto build dir. Ignored if -f is used. Defaults to $buildRoot."
    echo " -f PATH      - Explicit image.ub source path (bypasses build-dir auto-detect)"
    echo " -B           - Also stage the PL bitstream (system.bit -> system.bit.bin) for tftp-only/diskless netboot"
    echo " -M MAC       - Stage a per-MAC bitstream copy system.bit.bin.<mac-dashes> (repeatable; implies -B; MAC colons or dashes, stored dash-form)"
@@ -53,10 +56,11 @@ function die {
     exit 1
 }
 
-while getopts b:f:BM:H flag
+while getopts b:p:f:BM:H flag
 do
     case "${flag}" in
         b) board=${OPTARG};;
+        p) buildRoot=${OPTARG};;
         f) srcOverride=${OPTARG};;
         B) stageBitstream=1;;
         # Store the MAC lowercased with ':' -> '-'. U-Boot's tftpboot treats the
@@ -89,19 +93,6 @@ fi
 ##############################################################################
 
 [ -d "$hardwareDir/$board" ] || die "Unknown board '$board' (no directory $hardwareDir/$board)"
-
-##############################################################################
-# Board -> Yocto project-name glob mapping.
-# This milestone serves only the RFSoC 4x2; add a case here if/when this
-# script needs to support additional boards' Yocto project-dir naming.
-##############################################################################
-
-function board_to_project_glob {
-    case "$1" in
-        RealDigitalRfSoC4x2) echo "SimpleRfSoc4x2*" ;;
-        *) die "No Yocto project-name mapping for board '$1' (add one in board_to_project_glob())" ;;
-    esac
-}
 
 ##############################################################################
 # Step 1: ensure the dnsmasq TFTP-only config exists (check-then-act; only
@@ -161,25 +152,54 @@ fi
 # /tftpboot/image.ub only if it differs from what is already staged
 ##############################################################################
 
+function stage_if_changed {
+   src=$1
+   dest=$2
+
+   # Make sure dest directory exists
+   dest_dir=$(dirname "$dest")
+   mkdir -p "$dest_dir" || die "Failed to create directory: $dest_dir"
+
+   if cmp -s "$src" "$dest" 2>/dev/null; then
+      echo "$dest already up to date"
+   else
+      echo "Staging $src -> $dest"
+      cp "$src" "$dest"
+      cmp -s "$src" "$dest" || die "Post-copy verification failed: $dest does not match $src"
+      echo "Staged $(stat -c%s "$dest") bytes"
+   fi
+}
+
 if [ -n "$srcOverride" ]; then
    src="$srcOverride"
    [ -f "$src" ] || die "Source file '$src' does not exist"
-else
-   projectGlob=$(board_to_project_glob "$board")
-   buildRoot="/u1/${USER}/build/YoctoProjects"
-   src=$(find "$buildRoot" -path "*${projectGlob}*/linux/image.ub" \
-           -printf '%T@ %p\n' 2>/dev/null | sort -rn | head -1 | cut -d' ' -f2-)
-   [ -n "$src" ] || die "No image.ub found for board '$board' under $buildRoot"
-fi
 
-dest="$TFTP_ROOT/image.ub" # /tftpboot/image.ub -- the FIT the board's tftpboot fetches
-if cmp -s "$src" "$dest" 2>/dev/null; then
-   echo "$dest already up to date"
+   # In override mode board is ignored and target name is unknown.
+   # Use fixed image location at the root of the tftp server.
+   # If this image is supposed to be used, on the board's u-boot the
+   # 'tftp_image' environment variable must be set accordingly (either manually
+   # or by using the Yocto build script's -u flag).
+   dest="$TFTP_ROOT/image.ub"
+
+   # Copy over the image file if it is different from the present one
+   stage_if_changed $src $dest
 else
-   echo "Staging $src -> $dest"
-   cp "$src" "$dest"
-   cmp -s "$src" "$dest" || die "Post-copy verification failed: $dest does not match $src"
-   echo "Staged $(stat -c%s "$dest") bytes"
+   for image in $buildRoot/*/linux/image.ub; do
+      # Skip if the glob didn't match anything
+      if [ ! -f "$image" ]; then
+         die "No image.ub found under $buildRoot"
+         break
+      fi
+      # Extract target name
+      target=$(basename "$(dirname "$(dirname "$image")")")
+
+      # Destination depends on target. UBOOT_TFTP_IMAGE_PATH in the Yocto build
+      # is used to point u-boot to a given path on the tftp server.
+      dest="$TFTP_ROOT/$board/$target/image.ub"
+
+      # Copy over the image file if it is different from the present one
+      stage_if_changed $src $dest
+   done
 fi
 
 ##############################################################################

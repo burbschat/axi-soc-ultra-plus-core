@@ -30,6 +30,7 @@ function show_help {
    echo " -s BUFFSZ    - DMA buffer size in bytes"
    echo " -i IMAGE     - Name of the target image (Default: petalinux-image-minimal)"
    echo " -m MODE      - U-Boot netboot fallback mode: 'fallback' boots from SD if TFTP fails, 'tftp-only' does not (Default: fallback)"
+   echo " -u PATH      - Override path for U-Boot tftp image request"
    echo " -c           - Force reconfigure if the project has already been configured"
    echo " -H           - Show this help text"
    exit 1
@@ -38,7 +39,7 @@ function show_help {
 doConfigure=0
 image=petalinux-image-minimal
 uboot_netboot_mode=fallback
-while getopts p:n:h:x:l:d:t:r:s:cHT:i:m: flag
+while getopts p:n:h:x:l:d:t:r:s:cHT:i:m:u: flag
 do
     case "${flag}" in
         p) path=${OPTARG};;
@@ -54,6 +55,7 @@ do
         T) projTop=${OPTARG};;
         i) image=${OPTARG};;
         m) uboot_netboot_mode=${OPTARG};;
+        u) tftp_img_path_override=${OPTARG};;
         H) show_help;;
     esac
 done
@@ -272,6 +274,17 @@ then
 
    # Set the shared U-Boot netboot hook's build-time mode in the local.conf
    echo "UBOOT_NETBOOT_MODE = \"${uboot_netboot_mode}\"" >> $proj_dir/build/conf/local.conf
+
+   # Set where on the tftp server u-boot looks for the FIT image.
+   # Use a board/target dependent path to allow for provisioning of multiple
+   # boards with possibly different firmwares from the same tftp server unless
+   # override is specified.
+   if [[ -n "$tftp_img_path_override" ]]; then
+      tftp_img_path="$tftp_img_path_override"
+   else
+      tftp_img_path="${hwType}/${name}/image.ub"
+   fi
+   echo "UBOOT_TFTP_IMAGE_PATH = \"${tftp_img_path}\"" >> $proj_dir/build/conf/local.conf
 
    # Install the samples/tests
    echo "IMAGE_INSTALL:append = \" axidmasamples\"" >> $proj_dir/build/conf/local.conf

@@ -11,6 +11,8 @@
 	"ipaddr=\0" \
 	"gatewayip=\0" \
 	"netmask=\0" \
+	/* Path to image on tftp server is formatted as <project name>/<target name>/image.ub. */ \
+	"tftp_image=@UBOOT_TFTP_IMAGE_PATH@\0" \
 	/* Prefer a preset static IP over DHCP when one is configured. */ \
 	/* && short-circuits so a dhcp or tftp failure each bail out at their own */ \
 	/* independent, hardcoded lwIP timeout (~6.2s measured for TFTP-fail; DHCP-fail unmeasured, */ \
