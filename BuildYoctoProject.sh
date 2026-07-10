@@ -37,7 +37,7 @@ function show_help {
 
 doConfigure=0
 image=petalinux-image-minimal
-while getopts p:n:h:x:l:d:t:r:s:f:cHT:m: flag
+while getopts p:n:h:x:l:d:t:r:s:cHT:i:m: flag
 do
     case "${flag}" in
         p) path=${OPTARG};;
