@@ -30,7 +30,7 @@ function show_help {
    echo " -s BUFFSZ    - DMA buffer size in bytes"
    echo " -i IMAGE     - Name of the target image (Default: petalinux-image-minimal)"
    echo " -m MODE      - U-Boot netboot fallback mode: 'fallback' boots from SD if TFTP fails, 'tftp-only' does not (Default: fallback)"
-   echo " -u PATH      - Override path for U-Boot tftp image request"
+   echo " -u PATH      - Override path for U-Boot tftp image fetch"
    echo " -c           - Force reconfigure if the project has already been configured"
    echo " -H           - Show this help text"
    exit 1
@@ -77,6 +77,7 @@ aes_stream_drivers=$(realpath $axi_soc_ultra_plus_core/../aes-stream-drivers)
 hwDir=$axi_soc_ultra_plus_core/hardware/$hwType
 imageDump=${xsa%.*}.linux.tar.gz
 proj_dir=$(realpath "$path/$Name")
+tftp_img_path="${hwType}/${name}/image.ub"
 
 ##############################################################################
 # Check total buffer size
@@ -161,6 +162,8 @@ echo "Number of DEST per lane: $numDest";
 echo "Number of DMA TX Buffers: $dmaTxBuffCount";
 echo "Number of DMA RX Buffers: $dmaRxBuffCount";
 echo "DMA Buffer Size: $dmaBuffSize Bytes";
+echo "U-Boot netboot fallback mode: $uboot_netboot_mode";
+echo "U-Boot netboot tftp image fetch path: $tftp_img_path";
 echo "$axi_soc_ultra_plus_core"
 echo "$aes_stream_drivers"
 
@@ -281,8 +284,6 @@ then
    # override is specified.
    if [[ -n "$tftp_img_path_override" ]]; then
       tftp_img_path="$tftp_img_path_override"
-   else
-      tftp_img_path="${hwType}/${name}/image.ub"
    fi
    echo "UBOOT_TFTP_IMAGE_PATH = \"${tftp_img_path}\"" >> $proj_dir/build/conf/local.conf
 
