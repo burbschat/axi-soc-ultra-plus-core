@@ -25,12 +25,14 @@ function show_help {
    echo " -r RXCNT     - Num RX buffers"
    echo " -s BUFFSZ    - DMA buffer size"
    echo " -c           - Force reconfigure if the project has already been configured"
+   echo " -e           - Activate env and cd to build dir"
    echo " -H           - Show this help text"
    exit 1
 }
 
 doConfigure=0
-while getopts p:n:h:x:l:d:t:r:s:f:cHT: flag
+activateEnv=0
+while getopts p:n:h:x:l:d:t:r:s:f:ceHT: flag
 do
     case "${flag}" in
         p) path=${OPTARG};;
@@ -43,6 +45,7 @@ do
         r) dmaRxBuffCount=${OPTARG};;
         s) dmaBuffSize=${OPTARG};;
         c) doConfigure=1;;
+        e) activateEnv=1;;
         T) projTop=${OPTARG};;
         H) show_help;;
     esac
@@ -330,6 +333,20 @@ else
 
    # Xilinx environment specific Yocto setup and automation scripts
    BDIR=build source setupsdk > /dev/null
+fi
+
+##############################################################################
+# Drop into build environment shell session
+##############################################################################
+
+if [ $activateEnv -eq 1 ]
+then
+   cd $proj_dir
+   echo "Dropping into shell for manual operations."
+   echo "You are now in $(pwd)"
+   echo "Exit this shell session to return to the parent shell (Ctrl+D or type 'exit')."
+   exec "${SHELL:-/bin/bash}" -i
+   # The script stops here if this branch was taken
 fi
 
 ##############################################################################
