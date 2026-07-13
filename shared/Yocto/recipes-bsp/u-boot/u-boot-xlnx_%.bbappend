@@ -15,12 +15,17 @@ do_configure:append () {
 	if [ -f ${WORKDIR}/platform-top.h ]; then
 		install ${WORKDIR}/platform-top.h ${S}/include/configs/
 		# @LOADPL_SEL@ selects whether netboot programs the PL from a TFTP-fetched
-		# bitstream (loadpl_net, tftp-only/diskless) or does nothing (loadpl_skip,
-		# fallback -- SD fpgautil owns the PL). Bareword swap keeps '&&' out of sed.
+		# bitstream (loadpl_net, tftp-only/diskless) or does attempt to load the
+		# TFTP-fetched bistream but continues on failure (loadpl_skip_nofail, best-effort),
+		# otherwise does nothing (loadpl_skip, fallback -- SD fpgautil owns the PL).
+		# Bareword swap keeps '&&' out of sed.
 		if [ "${UBOOT_NETBOOT_MODE}" = "tftp-only" ]; then
 			sed -i "s|@UBOOT_NETBOOT_MODE@|echo TFTP-only build: not falling back to SD|" \
 				${S}/include/configs/platform-top.h
 			sed -i "s|@LOADPL_SEL@|loadpl_net|" ${S}/include/configs/platform-top.h
+		elif [ "${UBOOT_NETBOOT_MODE}" = "best-effort" ]; then
+			sed -i "s|@UBOOT_NETBOOT_MODE@|run sdboot|" ${S}/include/configs/platform-top.h
+			sed -i "s|@LOADPL_SEL@|loadpl_net_nofail|" ${S}/include/configs/platform-top.h
 		else
 			sed -i "s|@UBOOT_NETBOOT_MODE@|run sdboot|" ${S}/include/configs/platform-top.h
 			sed -i "s|@LOADPL_SEL@|loadpl_skip|" ${S}/include/configs/platform-top.h

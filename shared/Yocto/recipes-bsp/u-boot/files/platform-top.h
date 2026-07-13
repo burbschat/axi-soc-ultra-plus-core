@@ -36,6 +36,9 @@
 	/* the kernel boots (never a net kernel over an unprogrammed PL). ${filesize} is */ \
 	/* set by whichever tftpboot succeeded. */ \
 	"loadpl_net=setexpr macfn gsub : - ${ethaddr} && if tftpboot 0x10000000 system.bit.${macfn}; then true; elif tftpboot 0x10000000 system.bin.${macfn}; then true; elif tftpboot 0x10000000 system.bit; then true; else tftpboot 0x10000000 system.bin; fi && fpga load 0 0x10000000 ${filesize}\0" \
+    /* Run loadpl_net but always return true to continue the chain even on fail for */ \
+    /* the fallback mode. */ \
+    "loadpl_net_nofail=run loadpl_net || true\0" \
 	/* fallback build: no U-Boot bitstream load -- the SD's startup-app-init fpgautil */ \
 	/* owns the PL exactly as before (avoids a double-program). */ \
 	"loadpl_skip=true\0" \

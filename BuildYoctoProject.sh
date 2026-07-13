@@ -29,7 +29,7 @@ function show_help {
    echo " -r RXCNT     - Number of DMA RX buffers"
    echo " -s BUFFSZ    - DMA buffer size in bytes"
    echo " -i IMAGE     - Name of the target image (Default: petalinux-image-minimal)"
-   echo " -m MODE      - U-Boot netboot fallback mode: 'fallback' boots from SD if TFTP fails, 'tftp-only' does not (Default: fallback)"
+   echo " -m MODE      - U-Boot netboot fallback mode: 'fallback' and 'best-effort' boots from SD if TFTP fails, 'tftp-only' does not (Default: fallback)"
    echo " -c           - Force reconfigure if the project has already been configured"
    echo " -H           - Show this help text"
    exit 1
@@ -59,7 +59,7 @@ do
 done
 
 case "$uboot_netboot_mode" in
-   fallback|tftp-only) ;;
+   fallback|tftp-only|best-effort) ;;
    *) echo "Invalid -m MODE '$uboot_netboot_mode' (expected 'fallback' or 'tftp-only')"; show_help;;
 esac
 
