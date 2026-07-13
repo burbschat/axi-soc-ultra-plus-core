@@ -30,9 +30,10 @@ function show_help {
    echo " -s BUFFSZ    - DMA buffer size in bytes"
    echo " -i IMAGE     - Name of the target image (Default: petalinux-image-minimal)"
    echo " -m MODE      - U-Boot boot mode (Default: sd-only):"
-   echo "                  'sd-only'   skips netboot entirely; fastest boot, no TFTP server needed"
-   echo "                  'fallback'  tries TFTP first, then boots from SD if that fails"
-   echo "                  'tftp-only' tries TFTP first, then halts instead of booting from SD"
+   echo "                  'sd-only'     skips netboot entirely; fastest boot, no TFTP server needed"
+   echo "                  'fallback'    tries TFTP first, then boots from SD if that fails"
+   echo "                  'best-effort' like fallback but also falls back to SD for bistream loading (avoid halt at uboot prompt)"
+   echo "                  'tftp-only'   tries TFTP first, then halts instead of booting from SD"
    echo " -e           - Activate the Yocto environment and drop into a shell in the build dir"
    echo "                (instead of running bitbake)"
    echo " -c           - Force reconfigure if the project has already been configured"
@@ -67,8 +68,8 @@ do
 done
 
 case "$uboot_netboot_mode" in
-   sd-only|fallback|tftp-only) ;;
-   *) echo "Invalid -m MODE '$uboot_netboot_mode' (expected 'sd-only', 'fallback' or 'tftp-only')"; show_help;;
+   sd-only|fallback|best-effort|tftp-only) ;;
+   *) echo "Invalid -m MODE '$uboot_netboot_mode' (expected 'sd-only', 'fallback', 'best-effort' or 'tftp-only')"; show_help;;
 esac
 
 ##############################################################################

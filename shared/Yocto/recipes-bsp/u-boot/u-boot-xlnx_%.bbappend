@@ -17,8 +17,10 @@ do_configure:append () {
 		# @BOOTCMD_SEL@ is the WHOLE bootcmd value, so sd-only can drop 'run netboot'
 		# entirely and never pay the PXE/TFTP timeouts on a board with no TFTP server.
 		# @LOADPL_SEL@ selects whether netboot programs the PL from a TFTP-fetched
-		# bitstream (loadpl_net, tftp-only/diskless) or does nothing (loadpl_skip,
-		# fallback and sd-only -- SD fpgautil owns the PL). Barewords keep '&&' out of
+		# bitstream (loadpl_net, tftp-only/diskless) or does attempt to load the
+		# TFTP-fetched bistream but continues on failure (loadpl_skip_nofail, best-effort),
+		# otherwise does nothing (loadpl_skip, fallback -- SD fpgautil owns the PL).
+		# Bareword swap keeps '&&' out of sed. Barewords keep '&&' out of
 		# the sed replacements, and the literals stay inline rather than in shell
 		# variables because BitBake would capture a ${...} expansion at parse time.
 		# Every replacement is plain text on purpose: no '&' (sed's whole-match),
@@ -34,6 +36,10 @@ do_configure:append () {
 			fallback)
 				sed -i "s|@BOOTCMD_SEL@|run netboot; run sdboot|" ${S}/include/configs/platform-top.h
 				sed -i "s|@LOADPL_SEL@|loadpl_skip|" ${S}/include/configs/platform-top.h
+				;;
+			best-effort)
+				sed -i "s|@BOOTCMD_SEL@|run netboot; run sdboot|" ${S}/include/configs/platform-top.h
+				sed -i "s|@LOADPL_SEL@|loadpl_net_nofail|" ${S}/include/configs/platform-top.h
 				;;
 			*)
 				# sd-only (the default). The leading echo is not decoration: it is
